@@ -13,10 +13,13 @@
 require 'spec_helper'
 
 describe User do
+
   before(:each) do
     @attr = {
-      :name => "value for name",
-      :email => "value@for.email"
+            :name => "Example User",
+            :email => "example@user.com",
+            :password => "examplepass",
+            :password_confirmation => "examplepass"
     }
   end
 
@@ -37,7 +40,7 @@ describe User do
   it "should accept names with lenght of 50" do
     long_name_user = User.new(@attr.merge(:name => 'a'*50))
     long_name_user.should be_valid
-   end
+  end
 
   it "should refuse names longer than 50" do
     long_name_user = User.new(@attr.merge(:name => 'a'*51))
@@ -45,7 +48,7 @@ describe User do
   end
 
   it "should accept valid email addresses" do
-    addrs = %w[a@b.c ABB@CDE.FH.HU first.last.blah@foo.org]
+    addrs = %w[ a@b.c ABB@CDE.FH.HU first.last.blah@foo.org ]
     addrs.each do |addr|
       valid_email_user = User.new(@attr.merge(:email => addr))
       valid_email_user.should be_valid
@@ -53,7 +56,7 @@ describe User do
   end
 
   it "should reject invalid email addresses" do
-    addrs = %w[a@b,c ABB_at_CDE.FH.HU first.last.blah@foo.]
+    addrs = %w[ a@b,c ABB_at_CDE.FH.HU first.last.blah@foo. ]
     addrs.each do |addr|
       valid_email_user = User.new(@attr.merge(:email => addr))
       valid_email_user.should_not be_valid
@@ -69,8 +72,74 @@ describe User do
   it "should reject duplicated email address up to case" do
     email_upper = @attr[:email].upcase
     user = User.create!(@attr)
-    user_with_duplicate_email = User.new(@attr.merge( :email => email_upper))
+    user_with_duplicate_email = User.new(@attr.merge(:email => email_upper))
     user_with_duplicate_email.should_not be_valid
   end
 
+  describe "password validations" do
+    it "should require a password" do
+      User.new(@attr.merge(:password => "", :password_confirmation => "")).
+              should_not be_valid
+    end
+
+    it "should require a matching password confirmation" do
+      User.new(@attr.merge(:password_confirmation => "invalid")).
+              should_not be_valid
+    end
+
+    it "should reject short passwords" do
+      short_pass = "a"*5
+      hash = @attr.merge(:password => short_pass, :password_confirmation => short_pass)
+      User.new(hash).should_not be_valid
+    end
+
+    it "should reject long passwords" do
+      long_pass = "a"*5
+      hash = @attr.merge(:password => long_pass, :password_confirmation => long_pass)
+      User.new(hash).should_not be_valid
+    end
+
+  end
+
+  describe "passwod encryption" do
+    before(:each) do
+      @user = User.create!(@attr)
+    end
+
+    it "should have an encrypted_password attribute" do
+      @user.should respond_to(:encrypted_password)
+    end
+
+    it "should set the encrypted_password attribute" do
+      @user.encrypted_password.should_not be_blank
+    end
+
+    describe "has_password? method" do
+
+      it "should return true if passwords match" do
+        @user.has_password?(@attr[:password]).should be_true
+      end
+
+      it "should return false if passwords do not match" do
+        @user.has_password?("invalid").should be_false
+      end
+    end
+
+    describe "authenticate method" do
+      it "should return nil if user with given email does not exist" do
+        User.authenticate("invalid@address.com", "dontcare").should be_nil
+      end
+
+      it "should return nil if password for user with email do not match" do
+        User.authenticate("example@user.com", "wrongpass").should be_nil
+      end
+
+      it "should return user if password for user with email do match" do
+        user = User.authenticate("example@user.com", "examplepass")
+        user.should == @user
+      end
+
+    end
+
+  end
 end
