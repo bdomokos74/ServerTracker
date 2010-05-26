@@ -8,7 +8,11 @@ can queue up for time slots, they are notified where there are free resources.
 First the tasks will need to be run manually, but it will be also possible to schedule predefined tasks for
 execution. 
 
-## Dependencies to install for development:
+## Start:
+
+script/server
+
+## Dependencies for development:
 
 sudo gem install rails -v 2.3.8
 sudo gem install rspec -v 1.3.0
@@ -33,10 +37,6 @@ sudo apt-get install sqlite3
 sudo apt-get install libsqlite3-dev
 sudo gem install sqlite3-ruby
 
-
-## Start:
-
-script/server
 
 ## Links:
 

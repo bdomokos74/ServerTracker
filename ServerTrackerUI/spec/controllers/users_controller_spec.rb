@@ -47,7 +47,7 @@ describe UsersController do
 
     describe "failure" do
       before(:each) do
-        @attr = { :name => "", :email => "", :password => "", :password_confirmation => ""}
+        @attr = {:name => "", :email => "", :password => "", :password_confirmation => ""}
         @user = Factory.build(:user, @attr)
         User.stub!(:new).and_return(@user)
         @user.should_receive(:save).and_return(false)
@@ -66,7 +66,7 @@ describe UsersController do
 
     describe "success" do
       before(:each) do
-        @attr = { :id => "1", :name => "new user", :email => "user@example.com", :password => "foobar", :password_confirmation => "foobar"}
+        @attr = {:id => "1", :name => "new user", :email => "user@example.com", :password => "foobar", :password_confirmation => "foobar"}
         @user = Factory.build(:user, @attr)
         User.stub!(:new).and_return(@user)
         @user.should_receive(:save).and_return(true)
@@ -81,6 +81,11 @@ describe UsersController do
         post :create, :user => @attr
         flash[:success].should =~ /welcome to servertracker/i
       end
-     end 
+
+      it "should leave the user signed in" do
+        post :create, :user => @attr
+        controller.should be_signed_in 
+      end
+    end
   end
 end

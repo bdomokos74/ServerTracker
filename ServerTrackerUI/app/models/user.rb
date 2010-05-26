@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20100524203102
+# Schema version: 20100526202551
 #
 # Table name: users
 #
@@ -10,6 +10,7 @@
 #  updated_at         :datetime
 #  encrypted_password :string(255)
 #  salt               :string(255)
+#  remember_token     :string(255)
 #
 
 require "digest"
@@ -32,6 +33,11 @@ class User < ActiveRecord::Base
 
   before_save :encrypt_password
 
+  def remember_me!
+    self.remember_token = encrypt("#{salt}--#{id}")
+    save_without_validation
+  end
+
   def has_password?(submitted_password)
     encrypt(submitted_password) == encrypted_password
   end
@@ -45,8 +51,10 @@ class User < ActiveRecord::Base
   private
 
   def encrypt_password
-    self.salt = make_salt
-    self.encrypted_password = encrypt(password)
+    unless password.nil?
+      self.salt = make_salt
+      self.encrypted_password = encrypt(password)
+    end
   end
 
   def encrypt(string)

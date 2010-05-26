@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20100524203102
+# Schema version: 20100526202551
 #
 # Table name: users
 #
@@ -10,6 +10,7 @@
 #  updated_at         :datetime
 #  encrypted_password :string(255)
 #  salt               :string(255)
+#  remember_token     :string(255)
 #
 
 require 'spec_helper'
@@ -143,5 +144,25 @@ describe User do
 
     end
 
+  end
+
+  describe "remember me" do
+
+    before(:each) do
+      @user = User.create!(@attr)
+    end
+
+    it "should have a remember_me! method" do
+      @user.should respond_to(:remember_me!)
+    end
+
+    it "should have a remember token" do
+      @user.should respond_to(:remember_token)
+    end
+
+    it "should set the remember token" do
+      @user.remember_me!
+      @user.remember_token.should_not be_nil
+    end
   end
 end
