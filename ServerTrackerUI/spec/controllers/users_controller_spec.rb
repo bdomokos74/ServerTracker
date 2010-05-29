@@ -84,8 +84,75 @@ describe UsersController do
 
       it "should leave the user signed in" do
         post :create, :user => @attr
-        controller.should be_signed_in 
+        controller.should be_signed_in
       end
     end
+  end
+
+  describe "GET 'edit'" do
+    before(:each) do
+      @user = Factory(:user)
+      test_sign_in(@user)
+    end
+
+    it "should be successfull" do
+      get :edit, :id => @user
+      response.should be_success
+    end
+
+    it "should have the right title" do
+      get :edit, :id => @user
+      response.should have_tag('title', /edit user/i)
+    end
+
+    it "should have a link to change the gravatar" do
+      get :edit, :id => @user
+      gravatar_url = "http://gravatar.com/emails"
+      response.should have_tag("a[href=?]", gravatar_url, /change/i)
+    end
+  end
+
+  describe "PUT 'update'" do
+    before(:each) do
+      @user = Factory(:user)
+      test_sign_in(@user)
+      User.should_receive(:find).with(@user).and_return(@user)
+    end
+
+    describe "failure" do
+      before(:each) do
+        @invalid_attr = {:email => "", :name => ""}
+        @user.should_receive(:update_attributes).and_return(false)
+      end
+
+      it "should render the 'edit' page" do
+        put :update, :id => @user, :user => {}
+        response.should render_template('edit')
+      end
+
+      it "should have the right title" do
+        put :update, :id => @user, :user => {}
+        response.should have_tag("title", /edit user/i)
+      end
+    end
+
+    describe "success" do
+      before(:each) do
+        @attr = {:email => "testuser@test.com", :name => "tester", :password => "foobar", :password_confirmation => "foobar"}
+        @user.should_receive(:update_attributes).and_return(true)
+      end
+
+      it "should redirect to the user's 'show' page" do
+        put :update, :id => @user, :user => {}
+        response.should redirect_to(user_path(@user))
+      end
+
+      it "should have the success indication" do
+        put :update, :id => @user, :user => {}
+        flash[:success].should =~ /updated/i
+      end
+
+    end
+
   end
 end
