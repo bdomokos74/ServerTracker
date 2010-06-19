@@ -190,4 +190,47 @@ describe UsersController do
       end
     end
   end
+
+  describe "GET 'index'" do
+    describe "for non-signed in users" do
+      it "should deny access" do
+        get :index
+        response.should redirect_to(signin_path)
+        flash[:notice].should =~ /sign in/i
+      end
+
+      describe "for signed in users" do
+        before(:each) do
+          @user = test_sign_in(Factory(:user))
+          second = Factory(:user, :email => "another@user.com")
+          third = Factory(:user, :email => "third@user.com")
+
+          @users = [@user, second, third]
+          30.times do
+            @users << Factory(:user, :email=>Factory.next(:email))
+          end
+          User.should_receive(:paginate).and_return(@users.paginate)
+        end
+
+        it "should be successfull" do
+          get :index
+          response.should be_success
+        end
+
+        it "should have the right title" do
+          get :index
+          response.should have_tag("title", /all users/i)
+        end
+
+        it "should paginate users" do
+          get :index
+          response.should have_tag("div.pagination")
+          response.should have_tag("span", "&laquo; Previous")
+          response.should have_tag("span", "1")
+          response.should have_tag("a[href=?]", "/users?page=2", "2")
+          response.should have_tag("a[href=?]", "/users?page=2", "Next &raquo;")
+        end
+      end
+    end
+  end
 end
