@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20100619103053
+# Schema version: 20100619221446
 #
 # Table name: users
 #
@@ -19,6 +19,7 @@ require "digest"
 class User < ActiveRecord::Base
   attr_accessor :password
   attr_accessible :name, :email, :password, :password_confirmation
+  has_many :microposts, :dependent => :destroy
 
   EmailRegex = /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i
 
@@ -33,6 +34,10 @@ class User < ActiveRecord::Base
   validates_length_of :password, :within => 6..40
 
   before_save :encrypt_password
+
+  def feed
+    Micropost.all(:conditions => ["user_id = ?", id]) 
+  end
 
   def remember_me!
     self.remember_token = encrypt("#{salt}--#{id}")

@@ -1,5 +1,5 @@
 # == Schema Information
-# Schema version: 20100619103053
+# Schema version: 20100619221446
 #
 # Table name: users
 #
@@ -52,7 +52,7 @@ describe User do
   end
 
   it "should accept valid email addresses" do
-    addrs = %w[ a@b.c ABB@CDE.FH.HU first.last.blah@foo.org ]
+    addrs = %w[  a@b.c ABB@CDE.FH.HU first.last.blah@foo.org  ]
     addrs.each do |addr|
       valid_email_user = User.new(@attr.merge(:email => addr))
       valid_email_user.should be_valid
@@ -60,7 +60,7 @@ describe User do
   end
 
   it "should reject invalid email addresses" do
-    addrs = %w[ a@b,c ABB_at_CDE.FH.HU first.last.blah@foo. ]
+    addrs = %w[  a@b,c ABB_at_CDE.FH.HU first.last.blah@foo.  ]
     addrs.each do |addr|
       valid_email_user = User.new(@attr.merge(:email => addr))
       valid_email_user.should_not be_valid
@@ -184,6 +184,45 @@ describe User do
       @user.toggle!(:admin)
       @user.should be_admin
     end
+  end
 
+  describe "micropost associations" do
+    before(:each) do
+      @user = User.create(@attr)
+      @mp1 = Factory(:micropost, :user => @user, :created_at => 1.day.ago)
+      @mp2 = Factory(:micropost, :user => @user, :created_at => 1.hour.ago)
+    end
+
+    it "should respond to microposts attribute" do
+      @user.should respond_to(:microposts)
+    end
+
+    it "should have the right microposts in the right order" do
+      @user.microposts.should == [@mp2, @mp1]
+    end
+
+    it "should destroy assosiated microposts" do
+      @user.destroy
+      [@mp1, @mp2].each do |micropost|
+        Micropost.find_by_id(micropost.id).should be_nil
+      end
+    end
+
+    describe "status feed" do
+      it "should have a feed" do
+        @user.should respond_to(:feed)
+      end
+
+      it "should include the user's microposts" do
+        @user.feed.include?(@mp1).should be_true
+        @user.feed.include?(@mp2).should be_true
+      end
+
+      it "should not include other user's microposts" do
+        mp3 = Factory(:micropost,
+                        :user => Factory(:user, :email => "other@email.com" ))
+        @user.feed.include?(mp3).should be_false
+      end
+    end
   end
 end
